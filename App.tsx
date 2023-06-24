@@ -6,7 +6,9 @@
  */
 
 import React from 'react';
-import LoginScreen from './src/screen/LoginScreen/LoginScreen';
+import Navigation from './src/navigation'
+
+
 import {
   SafeAreaView,
   ScrollView,
@@ -31,7 +33,7 @@ function App(): JSX.Element {
  
   return (
     <SafeAreaView style={styles.root}>
-        <LoginScreen/>
+        <Navigation/>
     </SafeAreaView>
   );
 }
