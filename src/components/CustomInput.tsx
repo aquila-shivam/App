@@ -53,6 +53,7 @@ const CustomInput:React.FC<CustomInputProps> = ({
               onChangeText={onChange}
               onBlur={onBlur}
               placeholder={placeholder}
+              placeholderTextColor="#999"
               style={styles.input}
               secureTextEntry={secureTextEntry}
             />
@@ -78,7 +79,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginVertical: 5,
   },
-  input: {},
+  input: {
+    color:'black'
+  }
 });
 
 export default CustomInput;

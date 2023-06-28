@@ -1,19 +1,60 @@
 import {View,Text,StyleSheet,ScrollView} from 'react-native'
 import CustomInput from '../components/CustomInput'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import CustomButton from '../components/CustomButton'
 import { useNavigation } from '@react-navigation/native'
 import { useForm } from 'react-hook-form'
+import { FIREBASE_AUTH } from '../../firebase/firebase';
+import { sendEmailVerification } from 'firebase/auth'
+const EMAIL_REGEX =
+  /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 
 const ConfirmEmailScreen = () => {
     const navigation = useNavigation(); 
-    const [code,setCode] = useState('');
-
+    const [loading,setLoading] = useState(false);
     const {control, handleSubmit, watch} = useForm();
+    const auth = FIREBASE_AUTH;
+    const user = auth.currentUser;
+    let email= '';
+    useEffect(()=>{
+      isEmailVerified();
+    },[navigation]);
 
-    const onConfirmPressed = () =>{
+    const isEmailVerified = async() => {
+      
+      console.log(user);
+      
+      await user?.reload();
+      if(user && user.emailVerified){
+        console.log('email verified');
+        navigation.reset({
+          index: 0,
+          routes :[{name : 'Home' as never}]
+        })
+      }else
+      {
+        console.log('email not verified');
+      }
+    };
+
+
+    const onConfirmPressed = async(data : any) =>{
         console.warn("onConfirmInPressed");
-        navigation.navigate('Home' as never)
+        
+        if(user)
+        {
+          try {
+            setLoading(true);
+            email = data.email;
+            await sendEmailVerification(user);
+            console.log("Email verification sent!");
+          } catch (error) {
+            console.log(error);
+          }
+          finally{
+            setLoading(false)
+          }
+        }
         
     }
 
@@ -25,7 +66,7 @@ const ConfirmEmailScreen = () => {
 
     const onResendPressed = () =>{
         console.warn('reset');
-        
+        isEmailVerified();
     }
 
     return (
@@ -33,27 +74,19 @@ const ConfirmEmailScreen = () => {
         <View style = {styles.root}>
             <Text style = {styles.title}>Confirm your email</Text>
             <CustomInput
-          name="username"
+          name="email"
           control={control}
-          placeholder="Username"
+          placeholder="Email"
           rules={{
-            required: 'Username code is required',
+            required: 'Email address is required',
+            pattern: {value: EMAIL_REGEX, message: 'Email is invalid'},
           }}
         />
 
-        <CustomInput
-          name="code"
-          control={control}
-          placeholder="Enter your confirmation code"
-          rules={{
-            required: 'Confirmation code is required',
-          }}
-        />
-
-        <CustomButton text="Confirm" onPress={handleSubmit(onConfirmPressed)} />
+        <CustomButton text={loading ? 'Loading...': 'Confirm'} onPress={handleSubmit(onConfirmPressed)} />
 
         <CustomButton
-          text="Resend code"
+          text="Check Email Verification"
           onPress={onResendPressed}
           type="SECONDARY"
         />

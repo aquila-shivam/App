@@ -5,6 +5,8 @@ import { useState } from 'react'
 import CustomButton from '../components/CustomButton';
 import {useForm, Controller} from 'react-hook-form';
 import { useNavigation } from '@react-navigation/native';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { FIREBASE_AUTH } from '../../firebase/firebase';
 
 
 
@@ -12,16 +14,41 @@ const LoginScreen = () => {
 
     const {height} = useWindowDimensions();
     const navigation = useNavigation();
-
+    const [loading,setLoading] = useState(false);
+    const auth = FIREBASE_AUTH;
     const {
         control,
         handleSubmit,
         formState: {errors},
       } = useForm();
 
-    const onSignInPressed = () =>{
+    const onSignInPressed = async(data : any) =>{
         // validate user
-        navigation.navigate('Home' as never)
+
+        console.log(data.username);
+        const email = data.email;
+        const password = data.password;
+
+        try {
+            
+            setLoading(true);
+            const response = await signInWithEmailAndPassword(auth,email,password);
+            console.warn('Check your email');
+            console.log(response);
+            navigation.reset({
+                index: 0,
+                routes :[{name : 'Home' as never}]
+              })
+            
+        } catch (error : any) {
+            console.log(error);
+        }
+        finally{
+            setLoading(false)
+            
+        }
+
+        
         
     }
 
@@ -51,10 +78,10 @@ const LoginScreen = () => {
             resizeMode='contain'/>
             
             <CustomInput
-                name="username"
-                placeholder="Username"
+                name="email"
+                placeholder="Email"
                 control={control}
-                rules={{required: 'Username is required'}}
+                rules={{required: 'Email is required'}}
             />
 
             <CustomInput
@@ -70,7 +97,7 @@ const LoginScreen = () => {
                     },
                 }}
             />
-            <CustomButton text='Sign In' onPress={handleSubmit(onSignInPressed)} type='PRIMARY'/>
+            <CustomButton text={loading ? 'Loading...': 'Sign in'} onPress={handleSubmit(onSignInPressed)} type='PRIMARY'/>
             <CustomButton text='Forget password ?' onPress={onForgetPasswordPressed}
             type = "TERTIARY"
             />

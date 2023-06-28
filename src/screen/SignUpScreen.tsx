@@ -4,14 +4,22 @@ import { useState } from 'react'
 import CustomButton from '../components/CustomButton'
 import { useNavigation } from '@react-navigation/native'
 import {useForm} from 'react-hook-form';
+import {FIREBASE_AUTH, FIREBASE_DB} from '../../firebase/firebase'
+import { UserCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth'
+import { setDoc, doc } from 'firebase/firestore'
+
 const EMAIL_REGEX =
   /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+
+
 
 const SignUpScreen = () => {
     
     const {control, handleSubmit, watch} = useForm();
     const pwd = watch('password');
     const navigation = useNavigation();
+    const auth = FIREBASE_AUTH;
+    const [loading,setLoading] = useState(false);
     
     const onUsingGooglePressed = () =>{
         console.warn("onUsingGooglePressed");
@@ -29,10 +37,39 @@ const SignUpScreen = () => {
         
     }
 
-    const onRegisterPressed = () =>{
-        console.warn("onRegisterPressed");
-        navigation.navigate('ConfirmEmail' as never)
+    const onRegisterPressed = async (data : any) =>{
+        console.log(data);
+        const email = data.email;
+        const password = data.password;
+        try {
+            
+            setLoading(true);
+            const response = await createUserWithEmailAndPassword(auth,email,password);
+            createUserInformation(response,data)
+            console.log(response);
+        } catch (error : any) {
+            console.log(error);  
+        }
+        finally{
+            setLoading(false)
+            navigation.navigate('ConfirmEmail' as never)
+        }
+    }
+
+    const createUserInformation = async (user : UserCredential,data : any) =>{
         
+        try {
+            
+            const docRef = await setDoc(doc(FIREBASE_DB,`users/${user.user.uid}`),{
+                username : data.username,
+                email : user.user.email
+            })
+            console.log(docRef);
+            
+        } catch (error : any) {
+            console.log(error);
+            
+        }
     }
 
     const onTermofUsePressed = () =>{
@@ -114,7 +151,7 @@ const SignUpScreen = () => {
             />
 
             <CustomButton
-            text="Register"
+            text={loading ? 'Loading...' : 'Register'}
             onPress={handleSubmit(onRegisterPressed)}
             />
 
